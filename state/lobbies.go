@@ -43,7 +43,6 @@ func init() {
 	lobbyList := LoadLobbyList()
 	for _, lobbyId := range lobbyList {
 		lobby := LoadLobby(lobbyId)
-		lobby.Rest
 		lobbies = append(lobbies, lobby)
 	}
 
