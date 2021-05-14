@@ -48,6 +48,7 @@ func ssrEnterLobby(w http.ResponseWriter, r *http.Request) {
 
 	var pageData *lobbyPageData
 	lobby.Synchronized(func() {
+		lobby.WriteJSON = api.WriteJSON
 		player := api.GetPlayer(lobby, r)
 
 		if player == nil {

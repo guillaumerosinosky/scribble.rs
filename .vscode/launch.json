@@ -9,7 +9,10 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/main.go"
+            "program": "${workspaceFolder}/main.go",
+            "env": {
+                "DB_HOST":"localhost"
+            }
         }
     ]
 }

@@ -187,7 +187,7 @@ func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player)
 			handleKickVoteEvent(lobby, player, toKickID)
 		}
 	} else if received.Type == "start" {
-		if lobby.Round == 0 && player == lobby.Owner {
+		if lobby.Round == 0 && player.ID == lobby.Owner.ID {
 			//We are reseting each players score, since players could
 			//technically be player a second game after the last one
 			//has already ended.
@@ -982,7 +982,7 @@ func (lobby *Lobby) JoinPlayer(playerName string) *Player {
 }
 
 func (lobby *Lobby) canDraw(player *Player) bool {
-	return lobby.drawer == player && lobby.CurrentWord != ""
+	return lobby.drawer.ID == player.ID && lobby.CurrentWord != ""
 }
 
 var connectionCharacterReplacer = strings.NewReplacer(" ", "", "-", "", "_", "")
@@ -992,4 +992,8 @@ var connectionCharacterReplacer = strings.NewReplacer(" ", "", "-", "", "_", "")
 func simplifyText(s string) string {
 	return connectionCharacterReplacer.
 		Replace(sanitize.Accents(s))
+}
+
+func (lobby *Lobby) RestartTimeTicker() {
+	go startTurnTimeTicker(lobby)
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/scribble-rs/scribble.rs/game"
+	"github.com/scribble-rs/scribble.rs/state"
 )
 
 var upgrader = websocket.Upgrader{
@@ -37,6 +38,7 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lobby.Synchronized(func() {
+		lobby.WriteJSON = WriteJSON
 		player := lobby.GetPlayer(sessionCookie)
 		if player == nil {
 			http.Error(w, "you don't have access to this lobby;usersession unknown", http.StatusUnauthorized)
@@ -107,6 +109,7 @@ func wsListen(lobby *game.Lobby, player *game.Player, socket *websocket.Conn) {
 			if handleError != nil {
 				log.Printf("Error handling event: %s\n", handleError)
 			}
+			state.SaveLobby(lobby)
 		}
 	}
 }

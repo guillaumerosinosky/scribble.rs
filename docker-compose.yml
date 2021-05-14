@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  redis:
+    image: bitnami/redis
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_AOF_ENABLED=no
+    ports: 
+      - "6379:6379"    
+  scribblers:
+    image: scribblers
+    build:
+      context: .
+    ports:
+      - 8080:8080
+    environment:
+      - DB_HOST=redis
+    depends_on:
+      - redis
+  redis-ui:
+    image: rediscommander/redis-commander
+    environment:
+    - REDIS_HOSTS=redis1:redis:6379
+    ports:
+    - "8081:8081"     
+    depends_on:
+    - redis

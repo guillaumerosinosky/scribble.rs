@@ -12,6 +12,7 @@ import (
 
 	"github.com/scribble-rs/scribble.rs/api"
 	"github.com/scribble-rs/scribble.rs/frontend"
+	"github.com/scribble-rs/scribble.rs/state"
 )
 
 func main() {
@@ -41,6 +42,14 @@ func main() {
 	if portHTTP == 0 {
 		portHTTP = 8080
 		log.Printf("Listening on default port %d\n", portHTTP)
+	}
+
+	databaseServer, databaseAvailable := os.LookupEnv("DB_HOST")
+	if databaseAvailable {
+		state.DatabaseHost = databaseServer
+		state.Persistence = true
+	} else {
+		state.Persistence = false
 	}
 
 	//Setting the seed in order for the petnames to be random.
