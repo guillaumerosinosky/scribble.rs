@@ -15,6 +15,9 @@ import (
 	"github.com/scribble-rs/scribble.rs/state"
 )
 
+var persist = func(lobby *game.Lobby) error {
+	return nil
+}
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -104,12 +107,11 @@ func wsListen(lobby *game.Lobby, player *game.Player, socket *websocket.Conn) {
 				}
 				continue
 			}
-
-			handleError := lobby.HandleEvent(data, received, player)
+			// TODO: add parameterized persist method logic
+			handleError := lobby.HandleEvent(data, received, player, state.SaveLobby)
 			if handleError != nil {
 				log.Printf("Error handling event: %s\n", handleError)
 			}
-			state.SaveLobby(lobby)
 		}
 	}
 }
@@ -117,6 +119,7 @@ func wsListen(lobby *game.Lobby, player *game.Player, socket *websocket.Conn) {
 // WriteJSON marshals the given input into a JSON string and sends it to the
 // player using the currently established websocket connection.
 func WriteJSON(player *game.Player, object interface{}) error {
+
 	player.GetWebsocketMutex().Lock()
 	defer player.GetWebsocketMutex().Unlock()
 

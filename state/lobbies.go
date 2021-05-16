@@ -106,6 +106,7 @@ func RemoveLobby(id string) {
 	defer globalStateMutex.Unlock()
 
 	removeLobby(id)
+	DeleteLobby(id)
 }
 
 func removeLobby(id string) {

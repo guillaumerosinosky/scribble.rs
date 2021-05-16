@@ -29,6 +29,17 @@ func nPool() *redis.Pool {
 	}
 }
 
+func DeleteLobby(id string) {
+	rPool := nPool()
+	conn := rPool.Get()
+	defer conn.Close()
+	values, err := conn.Do("DEL", id)
+	if err != nil {
+		log.Fatalf("Error while saving lobby %s : %s", id, err)
+	}
+	log.Printf("Result: %s", values.(string))
+}
+
 func SaveLobby(lobby *game.Lobby) {
 	rPool := nPool()
 	conn := rPool.Get()

@@ -92,7 +92,7 @@ type KickVote struct {
 	RequiredVoteCount int    `json:"requiredVoteCount"`
 }
 
-func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player) error {
+func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player, persist func(lobby *Lobby)) error {
 	lobby.mutex.Lock()
 	defer lobby.mutex.Unlock()
 
@@ -122,7 +122,7 @@ func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player)
 			}
 
 			lobby.AppendLine(line)
-
+			persist(lobby)
 			//We directly forward the event, as it seems to be valid.
 			lobby.sendDataToEveryoneExceptSender(player, received)
 		}
@@ -134,13 +134,14 @@ func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player)
 				return fmt.Errorf("error decoding data: %s", jsonError)
 			}
 			lobby.AppendFill(fill)
-
+			persist(lobby)
 			//We directly forward the event, as it seems to be valid.
 			lobby.sendDataToEveryoneExceptSender(player, received)
 		}
 	} else if received.Type == "clear-drawing-board" {
 		if lobby.canDraw(player) && len(lobby.currentDrawing) > 0 {
 			lobby.ClearDrawing()
+			persist(lobby)
 			lobby.sendDataToEveryoneExceptSender(player, received)
 		}
 	} else if received.Type == "choose-word" {
@@ -176,6 +177,7 @@ func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player)
 			lobby.wordHints = createWordHintFor(lobby.CurrentWord, false)
 			lobby.wordHintsShown = createWordHintFor(lobby.CurrentWord, true)
 			lobby.triggerWordHintUpdate()
+			persist(lobby) // TODO do before message
 		}
 	} else if received.Type == "kick-vote" {
 		if lobby.EnableVotekick {
@@ -185,6 +187,8 @@ func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player)
 			}
 
 			handleKickVoteEvent(lobby, player, toKickID)
+			persist(lobby) // TODO do before message
+
 		}
 	} else if received.Type == "start" {
 		if lobby.Round == 0 && player.ID == lobby.Owner.ID {
@@ -200,6 +204,8 @@ func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player)
 			}
 
 			advanceLobby(lobby)
+			persist(lobby) // TODO do before message
+
 		}
 	} else if received.Type == "name-change" {
 		newName, isString := (received.Data).(string)
@@ -207,7 +213,11 @@ func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player)
 			return fmt.Errorf("invalid data in name-change event: %v", received.Data)
 		}
 		handleNameChangeEvent(player, lobby, newName)
+		persist(lobby) // TODO do before message
+
 	} else if received.Type == "request-drawing" {
+		persist(lobby)
+
 		lobby.WriteJSON(player, GameEvent{Type: "drawing", Data: lobby.currentDrawing})
 	}
 	/* else if received.Type == "keep-alive" {
@@ -255,6 +265,7 @@ func handleMessage(message string, sender *Player, lobby *Lobby) {
 				//Since the word has been guessed correctly, we reveal it.
 				lobby.WriteJSON(sender, GameEvent{Type: "update-wordhint", Data: lobby.wordHintsShown})
 				recalculateRanks(lobby)
+				// TODO: persist here
 				lobby.triggerPlayersUpdate()
 			}
 		} else if levenshtein.ComputeDistance(normInput, normSearched) == 1 {
@@ -262,8 +273,10 @@ func handleMessage(message string, sender *Player, lobby *Lobby) {
 			//This allows other players to guess the word by watching what the
 			//other players are misstyping.
 			sendMessageToAll(trimmedMessage, sender, lobby)
+			// TODO: persist here
 			lobby.WriteJSON(sender, GameEvent{Type: "close-guess", Data: trimmedMessage})
 		} else {
+			// TODO: persist here
 			sendMessageToAll(trimmedMessage, sender, lobby)
 		}
 	}
@@ -576,6 +589,8 @@ func advanceLobby(lobby *Lobby) {
 	if !firstTurn {
 		nextTurnEvent.PreviousWord = &previousWord
 	}
+	// TODO: persist here
+
 	lobby.TriggerUpdateEvent("next-turn", nextTurnEvent)
 
 	lobby.WriteJSON(lobby.drawer, &GameEvent{Type: "your-turn", Data: lobby.wordChoice})
@@ -917,6 +932,8 @@ func generateReadyData(lobby *Lobby, player *Player) *Ready {
 func (lobby *Lobby) OnPlayerConnectUnsynchronized(player *Player) {
 	player.Connected = true
 	recalculateRanks(lobby)
+	// TODO: persist here
+
 	lobby.WriteJSON(player, GameEvent{Type: "ready", Data: generateReadyData(lobby, player)})
 
 	//This state is reached if the player reconnects before having chosen a word.
