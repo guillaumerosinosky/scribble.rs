@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"sync"
 	"testing"
 )
@@ -179,13 +180,13 @@ func Test_calculateGuesserScore(t *testing.T) {
 
 func Test_handleNameChangeEvent(t *testing.T) {
 	lobby := &Lobby{}
-	lobby.WriteJSON = func(player *Player, object interface{}) error {
+	lobby.WriteJSON = func(ctx context.Context, player *Player, object interface{}) error {
 		//Dummy to pass test.
 		return nil
 	}
 	player := lobby.JoinPlayer("Kevin")
 
-	handleNameChangeEvent(player, lobby, "Jim")
+	handleNameChangeEvent(context.TODO(), player, lobby, "Jim")
 
 	expectedName := "Jim"
 	if player.Name != expectedName {

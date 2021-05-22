@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,9 +11,10 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/scribble-rs/scribble.rs/game"
-	"github.com/scribble-rs/scribble.rs/state"
+	"github.com/guillaumerosinosky/scribble.rs/game"
+	"github.com/guillaumerosinosky/scribble.rs/state"
 )
 
 var persist = func(lobby *game.Lobby) error {
@@ -57,10 +59,10 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%s(%s) has connected\n", player.Name, player.ID)
 
 		player.SetWebsocket(ws)
-		lobby.OnPlayerConnectUnsynchronized(player)
+		lobby.OnPlayerConnectUnsynchronized(context.TODO(), player)
 
 		ws.SetCloseHandler(func(code int, text string) error {
-			lobby.OnPlayerDisconnect(player)
+			lobby.OnPlayerDisconnect(context.TODO(), player)
 			return nil
 		})
 
@@ -75,7 +77,7 @@ func wsListen(lobby *game.Lobby, player *game.Player, socket *websocket.Conn) {
 		err := recover()
 		if err != nil {
 			log.Printf("Error occurred in wsListen.\n\tError: %s\n\tPlayer: %s(%s)\nStack %s\n", err, player.Name, player.ID, string(debug.Stack()))
-			lobby.OnPlayerDisconnect(player)
+			lobby.OnPlayerDisconnect(context.TODO(), player)
 		}
 	}()
 
@@ -86,7 +88,7 @@ func wsListen(lobby *game.Lobby, player *game.Player, socket *websocket.Conn) {
 				//This happens when the server closes the connection. It will cause 1000 retries followed by a panic.
 				strings.Contains(err.Error(), "use of closed network connection") {
 				//Make sure that the sockethandler is called
-				lobby.OnPlayerDisconnect(player)
+				lobby.OnPlayerDisconnect(context.TODO(), player)
 				//If the error is fatal, we stop listening for more messages.
 				return
 			}
@@ -101,7 +103,7 @@ func wsListen(lobby *game.Lobby, player *game.Player, socket *websocket.Conn) {
 			err := json.Unmarshal(data, received)
 			if err != nil {
 				log.Printf("Error unmarshalling message: %s\n", err)
-				sendError := WriteJSON(player, game.GameEvent{Type: "system-message", Data: fmt.Sprintf("An error occurred trying to read your request, please report the error via GitHub: %s!", err)})
+				sendError := WriteJSON(context.TODO(), player, game.GameEvent{Type: "system-message", Data: fmt.Sprintf("An error occurred trying to read your request, please report the error via GitHub: %s!", err)})
 				if sendError != nil {
 					log.Printf("Error sending errormessage: %s\n", sendError)
 				}
@@ -118,7 +120,29 @@ func wsListen(lobby *game.Lobby, player *game.Player, socket *websocket.Conn) {
 
 // WriteJSON marshals the given input into a JSON string and sends it to the
 // player using the currently established websocket connection.
-func WriteJSON(player *game.Player, object interface{}) error {
+func WriteJSON(ctx context.Context, player *game.Player, object interface{}) error {
+	span := trace.SpanFromContext(ctx)
+	traceId := span.SpanContext().TraceID.String()
+	spanId := span.SpanContext().SpanID.String()
+
+	switch object.(type) {
+	case game.GameEvent:
+		event := object.(game.GameEvent)
+		event.TraceID = traceId
+		event.SpanID = spanId
+		object = event
+	case game.LineEvent:
+		event := object.(game.LineEvent)
+		event.TraceID = traceId
+		event.SpanID = spanId
+		object = event
+	case game.FillEvent:
+		event := object.(game.FillEvent)
+		event.TraceID = traceId
+		event.SpanID = spanId
+		object = event
+	default:
+	}
 
 	player.GetWebsocketMutex().Lock()
 	defer player.GetWebsocketMutex().Unlock()

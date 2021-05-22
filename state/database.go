@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/scribble-rs/scribble.rs/game"
+	"github.com/guillaumerosinosky/scribble.rs/game"
 )
 
 var (
@@ -33,11 +33,11 @@ func DeleteLobby(id string) {
 	rPool := nPool()
 	conn := rPool.Get()
 	defer conn.Close()
-	values, err := conn.Do("DEL", id)
+	_, err := conn.Do("DEL", id)
 	if err != nil {
-		log.Fatalf("Error while saving lobby %s : %s", id, err)
+		log.Fatalf("Error while deleting lobby %s : %s", id, err)
 	}
-	log.Printf("Result: %s", values.(string))
+	//log.Printf("Result: %s", values.(string))
 }
 
 func SaveLobby(lobby *game.Lobby) {

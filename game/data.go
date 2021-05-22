@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"strings"
 	"sync"
 	"time"
@@ -81,7 +82,7 @@ type Lobby struct {
 
 	mutex *sync.Mutex
 
-	WriteJSON func(player *Player, object interface{}) error
+	WriteJSON func(ctx context.Context, player *Player, object interface{}) error
 }
 
 // EditableLobbySettings represents all lobby settings that are editable by
@@ -302,8 +303,10 @@ func SanitizeName(name string) string {
 
 // GameEvent contains an eventtype and optionally any data.
 type GameEvent struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
+	Type    string      `json:"type"`
+	Data    interface{} `json:"data"`
+	TraceID string      `json:"traceId"`
+	SpanID  string      `json:"spanId"`
 }
 
 // GetConnectedPlayerCount returns the amount of player that have currently

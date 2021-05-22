@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/scribble-rs/scribble.rs/game"
+	"github.com/guillaumerosinosky/scribble.rs/game"
 )
 
 var (
@@ -106,7 +106,6 @@ func RemoveLobby(id string) {
 	defer globalStateMutex.Unlock()
 
 	removeLobby(id)
-	DeleteLobby(id)
 }
 
 func removeLobby(id string) {
@@ -126,6 +125,7 @@ func removeLobby(id string) {
 func removeLobbyByIndex(indexToDelete int) {
 	lobby := lobbies[indexToDelete]
 	lobbies = append(lobbies[:indexToDelete], lobbies[indexToDelete+1:]...)
+	DeleteLobby(lobby.LobbyID)
 	log.Printf("Closing lobby %s. There are currently %d open lobbies left.\n", lobby.LobbyID, len(lobbies))
 }
 

@@ -1,14 +1,15 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/scribble-rs/scribble.rs/game"
-	"github.com/scribble-rs/scribble.rs/state"
+	"github.com/guillaumerosinosky/scribble.rs/game"
+	"github.com/guillaumerosinosky/scribble.rs/state"
 )
 
 //This file contains the API methods for the public API
@@ -74,6 +75,9 @@ func createLobby(w http.ResponseWriter, r *http.Request) {
 	enableVotekick, enableVotekickInvalid := ParseBoolean("enable votekick", r.Form.Get("enable_votekick"))
 	publicLobby, publicLobbyInvalid := ParseBoolean("public", r.Form.Get("public"))
 
+	// used for having specific
+	customLobbyId := r.Form.Get("custom_lobby_id")
+
 	var requestErrors []string
 	if languageInvalid != nil {
 		requestErrors = append(requestErrors, languageInvalid.Error())
@@ -113,6 +117,10 @@ func createLobby(w http.ResponseWriter, r *http.Request) {
 	if createError != nil {
 		http.Error(w, createError.Error(), http.StatusBadRequest)
 		return
+	}
+
+	if customLobbyId != "" {
+		lobby.LobbyID = customLobbyId
 	}
 
 	lobby.WriteJSON = WriteJSON
@@ -287,7 +295,7 @@ func editLobby(w http.ResponseWriter, r *http.Request) {
 
 		lobbySettingsCopy := *lobby.EditableLobbySettings
 		lobbySettingsCopy.DrawingTime = drawingTime
-		lobby.TriggerUpdateEvent("lobby-settings-changed", lobbySettingsCopy)
+		lobby.TriggerUpdateEvent(context.TODO(), "lobby-settings-changed", lobbySettingsCopy)
 	})
 }
 

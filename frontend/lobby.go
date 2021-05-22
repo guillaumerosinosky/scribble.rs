@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/scribble-rs/scribble.rs/api"
-	"github.com/scribble-rs/scribble.rs/translations"
+	"github.com/guillaumerosinosky/scribble.rs/api"
+	"github.com/guillaumerosinosky/scribble.rs/translations"
 	"golang.org/x/text/language"
 )
 
@@ -32,7 +32,7 @@ func ssrEnterLobby(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userAgent := strings.ToLower(r.UserAgent())
-	if !(strings.Contains(userAgent, "gecko") || strings.Contains(userAgent, "chrome") || strings.Contains(userAgent, "opera") || strings.Contains(userAgent, "safari")) {
+	if !(strings.Contains(userAgent, "gecko") || strings.Contains(userAgent, "chrome") || strings.Contains(userAgent, "opera") || strings.Contains(userAgent, "safari") || strings.Contains(userAgent, "go-http")) {
 		templatingError := pageTemplates.ExecuteTemplate(w, "robot-page", &robotPageData{
 			BasePageConfig: currentBasePageConfig,
 			LobbyData:      api.CreateLobbyData(lobby),

@@ -5,8 +5,8 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/scribble-rs/scribble.rs/api"
-	"github.com/scribble-rs/scribble.rs/translations"
+	"github.com/guillaumerosinosky/scribble.rs/api"
+	"github.com/guillaumerosinosky/scribble.rs/translations"
 )
 
 var (
