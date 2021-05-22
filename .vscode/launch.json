@@ -5,12 +5,32 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Load test",
+            "name": "Load test (owner)",
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/tools/loadtest/main.go"
+            "program": "${workspaceFolder}/tools/loadtest/main.go",
+            "env": {
+                "USER_TYPE": "owner",
+                "OTEL":"true",
+                "OTEL_HOST": "localhost:4317",
+                "SERVICE_NAME": "owner"
+            }
         },
+        {
+            "name": "Load test (player)",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/tools/loadtest/main.go",
+            "env": {
+                "USER_TYPE": "player",
+                "OTEL":"true",
+                "OTEL_HOST": "localhost:4317",        
+                "SERVICE_NAME": "player"
+            }
+
+        },        
         {
             "name": "Start server",
             "type": "go",
@@ -18,7 +38,9 @@
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "env": {
-                "DB_HOST":"localhost"
+                "DB_HOST":"localhost",
+                "OTEL":"true",
+                "OTEL_HOST": "localhost:4317"
             }
         }
     ]

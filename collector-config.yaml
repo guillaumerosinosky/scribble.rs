@@ -1,0 +1,33 @@
+receivers:
+  opencensus:
+    endpoint: 0.0.0.0:55678
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:    
+  zipkin:
+    endpoint: 0.0.0.0:9411
+    
+processors:
+  batch:
+  queued_retry:        
+
+exporters:
+  logging:
+    loglevel: info
+  jaeger:
+    endpoint: jaeger:14250
+    insecure: true
+  #kafka:
+  #  brokers:
+  #    - kafka:9092
+  #  protocol_version: 2.0.0    
+  #  encoding: jaeger_json
+service:
+  pipelines:
+    traces:
+      receivers: [opencensus, otlp, zipkin]      
+      processors: [batch, queued_retry]
+      #exporters: [logging, jaeger, kafka]
+      exporters: [logging, jaeger]      
