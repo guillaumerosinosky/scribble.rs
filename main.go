@@ -87,6 +87,7 @@ func initProvider(collectorEndpoint string, serviceName string) func() {
 }
 
 func main() {
+	log.Printf("Starting Scribblers")
 	portHTTPFlag := flag.Int("portHTTP", -1, "defines the port to be used for http mode")
 	flag.Parse()
 
@@ -119,6 +120,8 @@ func main() {
 	if databaseAvailable {
 		state.DatabaseHost = databaseServer
 		state.Persistence = true
+		log.Printf("Persistence enabled on %s redis Server\n", state.DatabaseHost)
+
 	} else {
 		state.Persistence = false
 	}
@@ -128,6 +131,12 @@ func main() {
 	if !serviceNameSet {
 		serviceName = "Lobby"
 	}
+	persistenceModeSet := false
+	persistenceMode, persistenceModeSet := os.LookupEnv("PERSISTENCE_MODE")
+	if !persistenceModeSet {
+		persistenceMode = "NONE"
+	}
+	state.PersistenceMode = persistenceMode
 
 	telemetryServer, telemetryServerAvailable := os.LookupEnv("OTEL_HOST")
 

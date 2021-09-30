@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	Persistence  bool
-	DatabaseHost string
+	Persistence     bool
+	DatabaseHost    string
+	PersistenceMode string
 )
 
 func nPool() *redis.Pool {
@@ -52,6 +53,14 @@ func SaveLobby(lobby *game.Lobby) {
 
 }
 
+func NoSaveLobby(lobby *game.Lobby) {
+	// default behaviour
+}
+
+func AddLobbyEvent(lobby *game.Lobby) {
+
+}
+
 func LoadLobby(key string) *game.Lobby {
 	rPool := nPool()
 	conn := rPool.Get()
@@ -65,13 +74,17 @@ func LoadLobby(key string) *game.Lobby {
 }
 
 func LoadLobbyList() []string {
-	rPool := nPool()
-	conn := rPool.Get()
-	values, err := redis.Strings(conn.Do("KEYS", "*"))
-	if err != nil {
-		log.Fatalf("Error while gettings keys %s", err)
+	if Persistence {
+		rPool := nPool()
+		conn := rPool.Get()
+		values, err := redis.Strings(conn.Do("KEYS", "*"))
+		if err != nil {
+			log.Fatalf("Error while gettings keys %s", err)
+		}
+		return values
+	} else {
+		return []string{}
 	}
-	return values
 }
 
 func LobbyToJson(lobby *game.Lobby) string {

@@ -40,7 +40,8 @@
             "env": {
                 "DB_HOST":"localhost",
                 "OTEL":"true",
-                "OTEL_HOST": "localhost:4317"
+                "OTEL_HOST": "localhost:4317",
+                "PERSISTENCE_MODE": "BASIC"
             }
         }
     ]

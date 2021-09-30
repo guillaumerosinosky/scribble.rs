@@ -17,9 +17,10 @@ import (
 	"github.com/guillaumerosinosky/scribble.rs/state"
 )
 
-var persist = func(lobby *game.Lobby) error {
-	return nil
+var persist = func(lobby *game.Lobby) {
+
 }
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -81,6 +82,15 @@ func wsListen(lobby *game.Lobby, player *game.Player, socket *websocket.Conn) {
 		}
 	}()
 
+	switch state.PersistenceMode {
+	case "NONE":
+		persist = state.NoSaveLobby
+	case "BASIC":
+		persist = state.SaveLobby
+	case "EVENTS":
+		//TODO: implement
+	}
+
 	for {
 		messageType, data, err := socket.ReadMessage()
 		if err != nil {
@@ -109,8 +119,7 @@ func wsListen(lobby *game.Lobby, player *game.Player, socket *websocket.Conn) {
 				}
 				continue
 			}
-			// TODO: add parameterized persist method logic
-			handleError := lobby.HandleEvent(data, received, player, state.SaveLobby)
+			handleError := lobby.HandleEvent(data, received, player, persist)
 			if handleError != nil {
 				log.Printf("Error handling event: %s\n", handleError)
 			}
