@@ -243,7 +243,7 @@ func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player,
 	} else if received.Type == "request-drawing" {
 		persist(lobby)
 
-		lobby.WriteJSON(ctx, player, GameEvent{Type: "drawing", Data: lobby.currentDrawing})
+		lobby.WriteJSON(ctx, lobby, player, GameEvent{Type: "drawing", Data: lobby.currentDrawing})
 	}
 	/* else if received.Type == "keep-alive" {
 		This is a known dummy event in order to avoid accidental websocket
@@ -288,7 +288,7 @@ func handleMessage(ctx context.Context, message string, sender *Player, lobby *L
 				advanceLobby(ctx, lobby)
 			} else {
 				//Since the word has been guessed correctly, we reveal it.
-				lobby.WriteJSON(ctx, sender, GameEvent{Type: "update-wordhint", Data: lobby.wordHintsShown})
+				lobby.WriteJSON(ctx, lobby, sender, GameEvent{Type: "update-wordhint", Data: lobby.wordHintsShown})
 				recalculateRanks(lobby)
 				// TODO: persist here
 				lobby.triggerPlayersUpdate(ctx)
@@ -299,7 +299,7 @@ func handleMessage(ctx context.Context, message string, sender *Player, lobby *L
 			//other players are misstyping.
 			sendMessageToAll(ctx, trimmedMessage, sender, lobby)
 			// TODO: persist here
-			lobby.WriteJSON(ctx, sender, GameEvent{Type: "close-guess", Data: trimmedMessage})
+			lobby.WriteJSON(ctx, lobby, sender, GameEvent{Type: "close-guess", Data: trimmedMessage})
 		} else {
 			// TODO: persist here
 			sendMessageToAll(ctx, trimmedMessage, sender, lobby)
@@ -340,7 +340,7 @@ func sendMessageToAll(ctx context.Context, message string, sender *Player, lobby
 		Content:  discordemojimap.Replace(message),
 	}}
 	for _, target := range lobby.players {
-		lobby.WriteJSON(ctx, target, messageEvent)
+		lobby.WriteJSON(ctx, lobby, target, messageEvent)
 	}
 }
 
@@ -352,7 +352,7 @@ func (lobby *Lobby) sendMessageToAllNonGuessing(ctx context.Context, message str
 	}}
 	for _, target := range lobby.players {
 		if target.State != Guessing {
-			lobby.WriteJSON(ctx, target, messageEvent)
+			lobby.WriteJSON(ctx, lobby, target, messageEvent)
 		}
 	}
 }
@@ -405,7 +405,7 @@ func handleKickVoteEvent(ctx context.Context, lobby *Lobby, player *Player, toKi
 
 	//We send the kick event to all players, since it was a valid vote.
 	for _, otherPlayer := range lobby.players {
-		lobby.WriteJSON(ctx, otherPlayer, kickEvent)
+		lobby.WriteJSON(ctx, lobby, otherPlayer, kickEvent)
 	}
 
 	//If the valid vote also happens to be the last vote needed, we kick the player.
@@ -618,7 +618,7 @@ func advanceLobby(ctx context.Context, lobby *Lobby) {
 
 	lobby.TriggerUpdateEvent(ctx, "next-turn", nextTurnEvent)
 
-	lobby.WriteJSON(ctx, lobby.drawer, &GameEvent{Type: "your-turn", Data: lobby.wordChoice})
+	lobby.WriteJSON(ctx, lobby, lobby.drawer, &GameEvent{Type: "your-turn", Data: lobby.wordChoice})
 }
 
 // GameOverEvent is basically the ready event, but contains the last word.
@@ -639,7 +639,7 @@ func endGame(ctx context.Context, lobby *Lobby) {
 	recalculateRanks(lobby)
 
 	for _, player := range lobby.players {
-		lobby.WriteJSON(ctx, player, GameEvent{
+		lobby.WriteJSON(ctx, lobby, player, GameEvent{
 			Type: "game-over",
 			Data: &GameOverEvent{
 				PreviousWord: lobby.CurrentWord,
@@ -803,7 +803,7 @@ func createWordHintFor(word string, showAll bool) []*WordHint {
 func (lobby *Lobby) sendDataToEveryoneExceptSender(ctx context.Context, sender *Player, data interface{}) {
 	for _, otherPlayer := range lobby.GetPlayers() {
 		if otherPlayer != sender {
-			lobby.WriteJSON(ctx, otherPlayer, data)
+			lobby.WriteJSON(ctx, lobby, otherPlayer, data)
 		}
 	}
 }
@@ -811,13 +811,13 @@ func (lobby *Lobby) sendDataToEveryoneExceptSender(ctx context.Context, sender *
 func (lobby *Lobby) TriggerUpdateEvent(ctx context.Context, eventType string, data interface{}) {
 	event := &GameEvent{Type: eventType, Data: data}
 	for _, otherPlayer := range lobby.GetPlayers() {
-		lobby.WriteJSON(ctx, otherPlayer, event)
+		lobby.WriteJSON(ctx, lobby, otherPlayer, event)
 	}
 }
 
 func (lobby *Lobby) triggerUpdatePerPlayerEvent(ctx context.Context, eventType string, data func(*Player) interface{}) {
 	for _, otherPlayer := range lobby.GetPlayers() {
-		lobby.WriteJSON(ctx, otherPlayer, &GameEvent{Type: eventType, Data: data(otherPlayer)})
+		lobby.WriteJSON(ctx, lobby, otherPlayer, &GameEvent{Type: eventType, Data: data(otherPlayer)})
 	}
 }
 
@@ -959,13 +959,13 @@ func (lobby *Lobby) OnPlayerConnectUnsynchronized(ctx context.Context, player *P
 	recalculateRanks(lobby)
 	// TODO: persist here
 
-	lobby.WriteJSON(ctx, player, GameEvent{Type: "ready", Data: generateReadyData(lobby, player)})
+	lobby.WriteJSON(ctx, lobby, player, GameEvent{Type: "ready", Data: generateReadyData(lobby, player)})
 
 	//This state is reached if the player reconnects before having chosen a word.
 	//This can happen if the player refreshes his browser page or the socket
 	//loses connection and reconnects quickly.
 	if lobby.drawer == player && lobby.CurrentWord == "" {
-		lobby.WriteJSON(ctx, lobby.drawer, &GameEvent{Type: "your-turn", Data: lobby.wordChoice})
+		lobby.WriteJSON(ctx, lobby, lobby.drawer, &GameEvent{Type: "your-turn", Data: lobby.wordChoice})
 	}
 
 	//TODO Only send to everyone except for the new player, since it's part of the ready event.

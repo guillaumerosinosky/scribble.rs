@@ -180,7 +180,7 @@ func UnmarshallLobby(m LobbyEntity) *Lobby {
 
 		timeLeftTicker: time.NewTicker(1 * time.Second),
 		mutex:          &sync.Mutex{},
-		WriteJSON: func(ctx context.Context, player *Player, object interface{}) error {
+		WriteJSON: func(ctx context.Context, lobby *Lobby, player *Player, object interface{}) error {
 			//Dummy to pass test.
 			return nil
 		},

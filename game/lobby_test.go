@@ -180,7 +180,7 @@ func Test_calculateGuesserScore(t *testing.T) {
 
 func Test_handleNameChangeEvent(t *testing.T) {
 	lobby := &Lobby{}
-	lobby.WriteJSON = func(ctx context.Context, player *Player, object interface{}) error {
+	lobby.WriteJSON = func(ctx context.Context, lobby *Lobby, player *Player, object interface{}) error {
 		//Dummy to pass test.
 		return nil
 	}

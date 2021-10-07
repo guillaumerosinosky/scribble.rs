@@ -82,7 +82,7 @@ type Lobby struct {
 
 	mutex *sync.Mutex
 
-	WriteJSON func(ctx context.Context, player *Player, object interface{}) error
+	WriteJSON func(ctx context.Context, lobby *Lobby, player *Player, object interface{}) error
 }
 
 // EditableLobbySettings represents all lobby settings that are editable by

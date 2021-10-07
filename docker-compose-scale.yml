@@ -1,0 +1,75 @@
+version: "3.7"
+
+services:
+  redis:
+    image: bitnami/redis
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_AOF_ENABLED=no
+    ports: 
+      - "6379:6379"    
+  scribblers1:
+    image: scribblers
+    build:
+      context: .
+    ports:
+      - 8080:8080
+    environment:
+      - DB_HOST=redis
+      - PUBSUB=true
+    depends_on:
+      - redis
+  scribblers2:
+    image: scribblers
+    build:
+      context: .
+    ports:
+      - 8083:8080
+    environment:
+      - DB_HOST=redis
+      - PUBSUB=true
+
+    depends_on:
+      - redis
+  redis-ui:
+    image: rediscommander/redis-commander
+    environment:
+    - REDIS_HOSTS=redis1:redis:6379
+    ports:
+    - "8081:8081"     
+    depends_on:
+    - redis
+  redis-ui:
+    image: rediscommander/redis-commander
+    environment:
+    - REDIS_HOSTS=redis1:redis:6379
+    ports:
+    - "8081:8081"     
+    depends_on:
+    - redis
+  collector:
+    image: otel/opentelemetry-collector:0.17.0  
+    command: ["--config=/conf/collector-config.yaml", "--log-level=DEBUG"]
+    volumes:
+      - ./collector-config.yaml:/conf/collector-config.yaml    
+    ports:
+      - "9464:9464"
+      - "4317:4317"
+      - "55681:55681"      
+      - "55678:55678"
+    #depends_on:
+    #  - kafka     
+    restart: always    
+  jaeger:
+    image: jaegertracing/all-in-one
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411    
+    ports:
+      - "16686:16686"
+      - "6831:6831/tcp" 
+      - "6831:6831/udp" 
+      - "14250:14250"
+      - "9411:9411"      
+    depends_on:
+      - collector  
+    #cmd: ["--sampling.strategies-file=/etc/jaeger/sampling_strategies.json"]

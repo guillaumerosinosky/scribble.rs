@@ -34,6 +34,8 @@ type LobbyEntry struct {
 }
 
 func publicLobbies(w http.ResponseWriter, r *http.Request) {
+	// force refresh to get from persistence
+	state.LoadLobbies()
 	lobbies := state.GetPublicLobbies()
 	lobbyEntries := make([]*LobbyEntry, 0, len(lobbies))
 	for _, lobby := range lobbies {

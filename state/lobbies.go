@@ -40,12 +40,15 @@ func init() {
 
 	globalStateMutex.Lock()
 	defer globalStateMutex.Unlock()
+	LoadLobbies()
+}
+
+func LoadLobbies() {
 	lobbyList := LoadLobbyList()
 	for _, lobbyId := range lobbyList {
 		lobby := LoadLobby(lobbyId)
 		lobbies = append(lobbies, lobby)
 	}
-
 }
 
 // AddLobby adds a lobby to the instance, making it visible for GetLobby calls.

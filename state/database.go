@@ -23,7 +23,7 @@ type PersistedEvent struct {
 	Data     []byte
 }
 
-func PublishRedis(channel string, message string) {
+func PublishRedis(channel string, message []byte) {
 	c, err := redis.Dial("tcp", DatabaseHost+":6379")
 	if err != nil {
 		log.Println(err)
@@ -44,7 +44,7 @@ func SubscribeRedis(pChannel string, channel chan []byte) {
 		switch v := psc.Receive().(type) {
 		case redis.Message:
 			fmt.Printf("%s: message: %s\n", v.Channel, v.Data)
-			// get lobbyId, userId, message
+			channel <- v.Data
 
 		case redis.Subscription:
 			fmt.Printf("%s: %s %d\n", v.Channel, v.Kind, v.Count)

@@ -131,7 +131,10 @@ func wsListen(lobby *game.Lobby, player *game.Player, socket *websocket.Conn) {
 
 				realData, err := json.Marshal(event)
 				if err == nil {
-					channelIn <- realData
+					// publish on redis
+					state.PublishRedis(lobby.LobbyID+"-in", realData)
+
+					//channelIn <- realData
 				} else {
 					log.Printf("wsListen: error while marshalling %s", err)
 				}
@@ -176,7 +179,7 @@ func HandleEvent(lobby *game.Lobby, player *game.Player, data []byte) error {
 	err := json.Unmarshal(data, received)
 	if err != nil {
 		log.Printf("Error unmarshalling message: %s\n", err)
-		sendError := WriteJSON(context.TODO(), player, game.GameEvent{Type: "system-message", Data: fmt.Sprintf("An error occurred trying to read your request, please report the error via GitHub: %s!", err)})
+		sendError := WriteJSON(context.TODO(), lobby, player, game.GameEvent{Type: "system-message", Data: fmt.Sprintf("An error occurred trying to read your request, please report the error via GitHub: %s!", err)})
 		if sendError != nil {
 			log.Printf("Error sending errormessage: %s\n", sendError)
 		}
@@ -192,7 +195,7 @@ func HandleEvent(lobby *game.Lobby, player *game.Player, data []byte) error {
 
 // WriteJSON marshals the given input into a JSON string and sends it to the
 // player using the currently established websocket connection.
-func WriteJSON(ctx context.Context, player *game.Player, object interface{}) error {
+func WriteJSON(ctx context.Context, lobby *game.Lobby, player *game.Player, object interface{}) error {
 	span := trace.SpanFromContext(ctx)
 	traceId := span.SpanContext().TraceID.String()
 	spanId := span.SpanContext().SpanID.String()
@@ -218,13 +221,15 @@ func WriteJSON(ctx context.Context, player *game.Player, object interface{}) err
 
 	if state.PubSub {
 		var event state.PersistedEvent
-		//event.LobbyId = lobby.LobbyID
+		event.LobbyId = lobby.LobbyID
 		event.PlayerId = player.ID
 		event.Data, _ = json.Marshal(object)
 
 		realData, err := json.Marshal(event)
 		if err == nil {
-			channelOut <- realData
+			state.PublishRedis(lobby.LobbyID+"-out", realData)
+
+			//channelOut <- realData
 		} else {
 			log.Printf("error while marshalling writejson %s", err)
 		}
@@ -249,10 +254,16 @@ func pubSubOut() {
 		if err != nil {
 			log.Fatalf("pubsubOut: unable to unmarshal event %s", err)
 		}
-		// find player
-		player := state.GetPlayer(event.PlayerId)
+
+		var player *game.Player
+		lobby := state.GetLobby(event.LobbyId)
+		for _, p := range lobby.GetPlayers() {
+			if p.ID == event.PlayerId {
+				player = p
+			}
+		}
 		if player == nil {
-			log.Fatalf("pubsubOut: player %s not found", event.PlayerId)
+			log.Fatalf("pubSubIn: player %s not found", event.PlayerId)
 		}
 
 		//HandleEvent(lobby, player, data)
