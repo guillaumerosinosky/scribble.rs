@@ -32,7 +32,7 @@
 
         },        
         {
-            "name": "Start server",
+            "name": "Start server (persist basic)",
             "type": "go",
             "request": "launch",
             "mode": "debug",
@@ -41,7 +41,21 @@
                 "DB_HOST":"localhost",
                 "OTEL":"true",
                 "OTEL_HOST": "localhost:4317",
-                "PERSISTENCE_MODE": "BASIC"
+                "PERSISTENCE_MODE": "BASIC",
+            }
+        },        
+        {
+            "name": "Start server (persist basic + pubsub)",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "env": {
+                "DB_HOST":"localhost",
+                "OTEL":"true",
+                "OTEL_HOST": "localhost:4317",
+                "PERSISTENCE_MODE": "BASIC",
+                "PUBSUB": "true",
             }
         }
     ]

@@ -2,6 +2,7 @@ package state
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 
@@ -13,7 +14,49 @@ var (
 	Persistence     bool
 	DatabaseHost    string
 	PersistenceMode string
+	PubSub          bool
 )
+
+type PersistedEvent struct {
+	LobbyId  string
+	PlayerId string
+	Data     []byte
+}
+
+func PublishRedis(channel string, message string) {
+	c, err := redis.Dial("tcp", DatabaseHost+":6379")
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+	c.Do("PUBLISH", channel, message)
+}
+
+func SubscribeRedis(pChannel string, channel chan []byte) {
+	c, err := redis.Dial("tcp", DatabaseHost+":6379")
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+	psc := redis.PubSubConn{Conn: c}
+	psc.Subscribe(pChannel)
+	for {
+		switch v := psc.Receive().(type) {
+		case redis.Message:
+			fmt.Printf("%s: message: %s\n", v.Channel, v.Data)
+			// get lobbyId, userId, message
+
+		case redis.Subscription:
+			fmt.Printf("%s: %s %d\n", v.Channel, v.Kind, v.Count)
+		case error:
+			fmt.Println(v)
+		}
+	}
+}
+
+func OnSubscribeMessageRedis() {
+
+}
 
 func nPool() *redis.Pool {
 	return &redis.Pool{
@@ -45,11 +88,11 @@ func SaveLobby(lobby *game.Lobby) {
 	rPool := nPool()
 	conn := rPool.Get()
 	defer conn.Close()
-	values, err := conn.Do("SET", lobby.LobbyID, LobbyToJson(lobby))
+	_, err := conn.Do("SET", lobby.LobbyID, LobbyToJson(lobby))
 	if err != nil {
 		log.Fatalf("Error while saving lobby %s : %s", lobby.LobbyID, err)
 	}
-	log.Printf("Result: %s", values.(string))
+	//log.Printf("Result: %s", values.(string))
 
 }
 
@@ -69,7 +112,7 @@ func LoadLobby(key string) *game.Lobby {
 	if err != nil {
 		log.Fatalf("Error while saving lobby %s : %s", key, err)
 	}
-	log.Printf("Result: %s", value)
+	log.Printf("Load lobby: %s", value)
 	return JsonToLobby(value)
 }
 

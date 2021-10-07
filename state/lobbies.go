@@ -58,6 +58,18 @@ func AddLobby(lobby *game.Lobby) {
 
 }
 
+//
+func GetPlayer(id string) *game.Player {
+	for _, l := range lobbies {
+		for _, p := range l.GetPlayers() {
+			if p.ID == id {
+				return p
+			}
+		}
+	}
+	return nil
+}
+
 // GetLobby returns a Lobby that has a matching ID or no Lobby if none could
 // be found.
 func GetLobby(id string) *game.Lobby {

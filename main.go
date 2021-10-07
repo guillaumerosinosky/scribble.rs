@@ -126,6 +126,14 @@ func main() {
 		state.Persistence = false
 	}
 
+	pubSub, pubSubAvailable := os.LookupEnv("PUBSUB")
+	if pubSubAvailable && pubSub == "true" {
+		state.PubSub = true
+		//go state.SubscribeRedis()
+	} else {
+		state.PubSub = false
+	}
+
 	telemetryActivated, _ := os.LookupEnv("OTEL")
 	serviceName, serviceNameSet := os.LookupEnv("SERVICE_NAME")
 	if !serviceNameSet {
