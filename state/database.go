@@ -43,7 +43,7 @@ func SubscribeRedis(pChannel string, channel chan []byte) {
 	for {
 		switch v := psc.Receive().(type) {
 		case redis.Message:
-			fmt.Printf("%s: message: %s\n", v.Channel, v.Data)
+			//fmt.Printf("%s: message: %s\n", v.Channel, v.Data)
 			channel <- v.Data
 
 		case redis.Subscription:
@@ -112,7 +112,7 @@ func LoadLobby(key string) *game.Lobby {
 	if err != nil {
 		log.Fatalf("Error while saving lobby %s : %s", key, err)
 	}
-	log.Printf("Load lobby: %s", value)
+	//log.Printf("Load lobby: %s", value)
 	return JsonToLobby(value)
 }
 

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/guillaumerosinosky/scribble.rs/api"
+	"github.com/guillaumerosinosky/scribble.rs/state"
 	"github.com/guillaumerosinosky/scribble.rs/translations"
 	"golang.org/x/text/language"
 )
@@ -25,6 +26,7 @@ type robotPageData struct {
 
 // ssrEnterLobby opens a lobby, either opening it directly or asking for a lobby.
 func ssrEnterLobby(w http.ResponseWriter, r *http.Request) {
+	state.LoadLobbies()
 	lobby, err := api.GetLobby(r)
 	if err != nil {
 		userFacingError(w, err.Error())

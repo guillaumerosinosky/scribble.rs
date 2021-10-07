@@ -45,6 +45,7 @@ func init() {
 
 func LoadLobbies() {
 	lobbyList := LoadLobbyList()
+	lobbies = []*game.Lobby{}
 	for _, lobbyId := range lobbyList {
 		lobby := LoadLobby(lobbyId)
 		lobbies = append(lobbies, lobby)

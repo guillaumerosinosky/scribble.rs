@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"go.opentelemetry.io/otel/trace"
@@ -74,6 +75,8 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 			go pubSubOut()
 		}
 
+		// wait a bit for goroutines to initialize properly TODO: find better way
+		time.Sleep(500 * time.Millisecond)
 		lobby.OnPlayerConnectUnsynchronized(context.TODO(), player)
 
 		ws.SetCloseHandler(func(code int, text string) error {
@@ -167,10 +170,11 @@ func pubSubIn() {
 			}
 		}
 		if player == nil {
-			log.Fatalf("pubSubIn: player %s not found", event.PlayerId)
+			log.Printf("pubSubIn: player %s not found", event.PlayerId)
+		} else {
+			HandleEvent(lobby, player, event.Data)
 		}
 
-		HandleEvent(lobby, player, event.Data)
 	}
 }
 
@@ -263,11 +267,15 @@ func pubSubOut() {
 			}
 		}
 		if player == nil {
-			log.Fatalf("pubSubIn: player %s not found", event.PlayerId)
+			// don't send event: player is probably on another server
+			log.Printf("pubsubOut: player %s not found", event.PlayerId)
+
+		} else {
+			// send event only if player found
+			//HandleEvent(lobby, player, data)
+			sendJSONtoSocket(player, gameEvent)
 		}
 
-		//HandleEvent(lobby, player, data)
-		sendJSONtoSocket(player, gameEvent)
 	}
 }
 
@@ -276,6 +284,9 @@ func sendJSONtoSocket(player *game.Player, object interface{}) error {
 	defer player.GetWebsocketMutex().Unlock()
 
 	socket := player.GetWebsocket()
+	if socket == nil {
+		return nil
+	}
 	if socket == nil || !player.Connected {
 		return errors.New("player not connected")
 	}
