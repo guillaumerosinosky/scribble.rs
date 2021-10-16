@@ -11,8 +11,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/guillaumerosinosky/scribble.rs/api"
 	"github.com/guillaumerosinosky/scribble.rs/frontend"
+	"github.com/guillaumerosinosky/scribble.rs/game"
 	"github.com/guillaumerosinosky/scribble.rs/state"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/stdout"
@@ -179,7 +181,9 @@ func main() {
 	//Setting the seed in order for the petnames to be random.
 	rand.Seed(time.Now().UnixNano())
 
-	log.Println("Started.")
+	game.ReplicaID = uuid.Must(uuid.NewV4()).String()
+
+	log.Println("Started replica {}.", game.ReplicaID)
 
 	api.SetupRoutes()
 	frontend.SetupRoutes()

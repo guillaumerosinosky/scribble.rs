@@ -69,7 +69,9 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 			// create channels in and out
 			channelIn = make(chan []byte)
 			channelOut = make(chan []byte)
-			go state.SubscribeRedis(lobby.LobbyID+"-in", channelIn)
+			if lobby.IsReferenceReplica() {
+				go state.SubscribeRedis(lobby.LobbyID+"-in", channelIn)
+			}
 			go state.SubscribeRedis(lobby.LobbyID+"-out", channelOut)
 			go pubSubIn()
 			go pubSubOut()
@@ -159,7 +161,7 @@ func pubSubIn() {
 		if err != nil {
 			log.Fatalf("pubSubIn: Error while unmarshal in %s", err)
 		}
-
+		log.Printf("pubSubIn: received %s", event)
 		// find lobby
 		var player *game.Player
 
@@ -171,10 +173,14 @@ func pubSubIn() {
 		}
 		if player == nil {
 			log.Printf("pubSubIn: player %s not found", event.PlayerId)
-		} else {
-			HandleEvent(lobby, player, event.Data)
-		}
 
+			player = lobby.JoinPlayer("")
+			player.ID = event.PlayerId
+			// TODO: initialize player from player µs
+			lobby.OnPlayerConnectUnsynchronized(context.TODO(), player)
+
+		}
+		HandleEvent(lobby, player, event.Data)
 	}
 }
 
@@ -223,7 +229,7 @@ func WriteJSON(ctx context.Context, lobby *game.Lobby, player *game.Player, obje
 	default:
 	}
 
-	if state.PubSub {
+	if state.PubSub && lobby.IsReferenceReplica() {
 		var event state.PersistedEvent
 		event.LobbyId = lobby.LobbyID
 		event.PlayerId = player.ID

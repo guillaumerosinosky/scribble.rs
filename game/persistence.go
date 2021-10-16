@@ -53,6 +53,7 @@ type LobbyEntity struct {
 	CurrentDrawing           []interface{}
 	Lowercaser               cases.Caser
 	LastPlayerDisconnectTime *time.Time
+	ReferenceReplicaID       string
 }
 
 func MarshallPlayer(player *Player) *PlayerEntity {
@@ -146,6 +147,7 @@ func MarshallLobby(lobby *Lobby) LobbyEntity {
 		CurrentDrawing:        lobby.currentDrawing,
 		//Lowercaser:               lobby.lowercaser,
 		LastPlayerDisconnectTime: lobby.LastPlayerDisconnectTime,
+		ReferenceReplicaID:       lobby.ReferenceReplicaID,
 	}
 
 	return m
@@ -177,9 +179,9 @@ func UnmarshallLobby(m LobbyEntity) *Lobby {
 		currentDrawing:           m.CurrentDrawing,
 		lowercaser:               cases.Lower(language.Make(getLanguageIdentifier(m.Wordpack))),
 		LastPlayerDisconnectTime: m.LastPlayerDisconnectTime,
-
-		timeLeftTicker: time.NewTicker(1 * time.Second),
-		mutex:          &sync.Mutex{},
+		ReferenceReplicaID:       m.ReferenceReplicaID,
+		timeLeftTicker:           time.NewTicker(1 * time.Second),
+		mutex:                    &sync.Mutex{},
 		WriteJSON: func(ctx context.Context, lobby *Lobby, player *Player, object interface{}) error {
 			//Dummy to pass test.
 			return nil

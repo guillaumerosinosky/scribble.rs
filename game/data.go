@@ -14,6 +14,8 @@ import (
 
 const slotReservationTime = time.Minute * 5
 
+var ReplicaID string
+
 // Lobby represents a game session.
 // FIXME Field visibilities should be changed in case we ever serialize this.
 type Lobby struct {
@@ -81,6 +83,9 @@ type Lobby struct {
 	LastPlayerDisconnectTime *time.Time
 
 	mutex *sync.Mutex
+
+	// Lobby current reference replica UUID
+	ReferenceReplicaID string
 
 	WriteJSON func(ctx context.Context, lobby *Lobby, player *Player, object interface{}) error
 }
@@ -393,4 +398,14 @@ func (lobby *Lobby) Synchronized(logic func()) {
 	defer lobby.mutex.Unlock()
 
 	logic()
+}
+
+// Is this lobby the current reference replica?
+func (lobby *Lobby) IsReferenceReplica() bool {
+	return lobby.ReferenceReplicaID == ReplicaID
+}
+
+// Set this lobby to the current replica
+func (lobby *Lobby) SetReferenceReplica() {
+	lobby.ReferenceReplicaID = ReplicaID
 }

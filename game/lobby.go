@@ -886,6 +886,8 @@ func CreateLobby(playerName, chosenLanguage string, publicLobby bool, drawingTim
 
 	lobby.words = words
 
+	lobby.SetReferenceReplica()
+
 	return player, lobby, nil
 }
 
