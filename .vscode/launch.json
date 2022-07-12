@@ -57,6 +57,47 @@
                 "PERSISTENCE_MODE": "BASIC",
                 "PUBSUB": "true",
             }
-        }
+        },        
+        {
+            "name": "Start wordlist",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/microservices/wordlist/main.go",
+            "env": {
+                "DB_HOST":"localhost",                
+                "OTEL":"true",
+                "OTEL_HOST": "localhost:4317",
+                "PERSISTENCE_MODE": "BASIC",
+            }
+        },
+        {
+            "name": "Start api gateway",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/microservices/apigateway/main.go",
+            "env": {
+                "OTEL":"true",
+                "OTEL_HOST": "localhost:4317",
+                "PERSISTENCE_MODE": "BASIC",
+                "LOBBY_HOST": "localhost:8080",
+                "PLAYER_HOST": "localhost:3001",
+                "WORDLIST_HOST": "localhost:3002",
+            }
+        },    
+        {
+            "name": "Start player",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/microservices/player/main.go",
+            "env": {
+                "DB_HOST":"localhost",                
+                "OTEL":"true",
+                "OTEL_HOST": "localhost:4317",
+                "PERSISTENCE_MODE": "BASIC",
+            }
+        },                  
     ]
 }

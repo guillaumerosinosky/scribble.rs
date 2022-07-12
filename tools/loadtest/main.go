@@ -145,7 +145,7 @@ func waitForCommand(ctx context.Context, socket *websocket.Conn, commands []stri
 }
 
 func sendCommand(ctx context.Context, socket *websocket.Conn, command string, data interface{}) error {
-	log.Printf("-> %d %s ", command, data)
+	log.Printf("-> %s %s ", command, data)
 	tracer := otel.Tracer("loadtest")
 	_, span := tracer.Start(ctx, command)
 	defer span.End()

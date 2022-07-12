@@ -77,7 +77,7 @@ func DeleteLobby(id string) {
 	rPool := nPool()
 	conn := rPool.Get()
 	defer conn.Close()
-	_, err := conn.Do("DEL", id)
+	_, err := conn.Do("DEL", "lobby-"+id)
 	if err != nil {
 		log.Fatalf("Error while deleting lobby %s : %s", id, err)
 	}
@@ -88,7 +88,7 @@ func SaveLobby(lobby *game.Lobby) {
 	rPool := nPool()
 	conn := rPool.Get()
 	defer conn.Close()
-	_, err := conn.Do("SET", lobby.LobbyID, LobbyToJson(lobby))
+	_, err := conn.Do("SET", "lobby-"+lobby.LobbyID, LobbyToJson(lobby))
 	if err != nil {
 		log.Fatalf("Error while saving lobby %s : %s", lobby.LobbyID, err)
 	}
@@ -110,7 +110,7 @@ func LoadLobby(key string) *game.Lobby {
 	defer conn.Close()
 	value, err := redis.String(conn.Do("GET", key))
 	if err != nil {
-		log.Fatalf("Error while saving lobby %s : %s", key, err)
+		log.Fatalf("Error while loading lobby %s : %s", key, err)
 	}
 	//log.Printf("Load lobby: %s", value)
 	return JsonToLobby(value)
@@ -120,7 +120,7 @@ func LoadLobbyList() []string {
 	if Persistence {
 		rPool := nPool()
 		conn := rPool.Get()
-		values, err := redis.Strings(conn.Do("KEYS", "*"))
+		values, err := redis.Strings(conn.Do("KEYS", "lobby-*"))
 		if err != nil {
 			log.Fatalf("Error while gettings keys %s", err)
 		}

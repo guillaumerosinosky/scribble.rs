@@ -879,6 +879,7 @@ func CreateLobby(playerName, chosenLanguage string, publicLobby bool, drawingTim
 	lobby.Owner = player
 	lobby.creator = player
 
+	// TODO: read from wordlist microservice
 	words, err := readWordList(lobby.lowercaser, chosenLanguage)
 	if err != nil {
 		return nil, nil, err
